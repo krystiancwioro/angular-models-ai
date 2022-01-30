@@ -1,0 +1,68 @@
+.addModel-page {
+  background-image: url('../../../assets/backgroundAI.png');
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  align-items: center;
+  width: 100vw;
+  min-height: 100vh;
+}
+
+.addModel-up {
+  display: flex;
+  margin: 50px 0;
+}
+
+.addModel__button {
+  margin-left: 250px;
+  border: 2px solid white;
+  background-color: transparent;
+  color: white;
+  padding: 25px 40px;
+  margin-right: 50px;
+  cursor: pointer;
+  display: flex;
+  text-align: center;
+
+  &:focus {
+    outline: none;
+  }
+
+  &:hover {
+    background-color: #fab856;
+    border: 2px solid #fab856;
+    color: white;
+    transition: .4s ease-in-out;
+  }
+}
+
+.addModel__buttonUpload {
+  padding: 20px 40px;
+  background-color: transparent;
+  border: 2px solid white;
+  color: white;
+  font-size: 40px;
+  cursor: pointer;
+  font-weight: bold;
+  margin-left: 200px;
+
+  &:focus {
+    outline: none;
+  }
+
+  &:hover {
+    background-color: #fab856;
+    border: 2px solid #fab856;
+    color: white;
+    transition: .4s ease-in-out;
+  }
+}
+
+.container {
+  color: white;
+}
+
+.loading {
+  margin-left: 200px;
+  color: #fab856;
+}

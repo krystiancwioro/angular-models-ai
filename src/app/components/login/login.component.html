@@ -1,0 +1,33 @@
+<div class="login-page">
+  <div class="header"><h2 class="header__logo">MAI
+    <img src="./assets/ai.png" width="40" height="40" alt='logo'></h2>
+  </div>
+  <div class="login-page-header">
+    <h1 class="login-page__title">Logowanie</h1>
+  </div>
+  <div class="middle">
+    <form class="login-form">
+      <h2 class="login-box__title">Zaloguj do MAI</h2>
+      <span class="login-input-span">
+        <label class="login-label">Login</label>
+        <input class="login-input" type="text" placeholder="admin" [(ngModel)]="login" name="login">
+        </span>
+      <span class="login-input-span">
+          <label class="login-label">Hasło</label>
+        <input class="login-input" type="password" placeholder="admin" [(ngModel)]="password" name="password">
+        </span>
+      <button class="login-button" (click)="Authentication()">
+        <div class="login-button__text"><span>Zaloguj się</span><span><i class="bi bi-caret-right"></i></span></div>
+      </button>
+      <a routerLink="/forgot-password" class="login__link"><i class="bi bi-caret-right"></i> Nie pamiętasz hasła?</a>
+    </form>
+    <div class="login-info"><p class="login__link" routerLink="/register"><i class="bi bi-caret-right"></i> Nie masz
+      konta w MAI?</p>
+      <hr class="solid">
+      <p class="cords"><i class="bi bi-caret-right"></i>Login: admin</p>
+      <p class="cords"><i class="bi bi-caret-right"></i>Hasło: admin</p>
+    </div>
+  </div>
+  <div class="top-footer"></div>
+  <div class="footer"></div>
+</div>

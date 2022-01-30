@@ -1,0 +1,123 @@
+@import "~bootstrap-icons/font/bootstrap-icons.css";
+
+.login-page {
+  display: flex;
+  flex-direction: column;
+  height: 100vh;
+  width: 100vw;
+}
+
+.header {
+  display: flex;
+  min-height: 10vh;
+  box-shadow: 0 0 5px gray;
+}
+
+.header__logo {
+  margin-left: 100px;
+  font-size: 30px;
+  color: #007834;
+}
+
+.login-page-header {
+  display: flex;
+  height: 10vh;
+}
+
+.login-page__title {
+  padding: 10px 40px;
+}
+
+.middle {
+  min-height: 35vh;
+  display: flex;
+  justify-content: center;
+
+  .login-form {
+    min-height: 35vh;
+    min-width: 20vw;
+    display: flex;
+    flex-direction: column;
+    justify-content: flex-start;
+    padding: 10px 15px;
+    background-color: #007834;
+  }
+
+  .login-info {
+    min-height: 30vh;
+    min-width: 20vw;
+    padding: 10px;
+    background-color: #273655;
+  }
+
+  .login-box__title {
+    color: white;
+  }
+
+  .login-input-span {
+    display: flex;
+    margin: 10px 0;
+    align-items: center;
+  }
+
+  .login-label {
+    flex: 0.2 2;
+    color: white;
+  }
+
+  .login-input {
+    flex: 1 2;
+    background-color: #025a28;
+    border-width: 1px;
+    border-radius: 5px;
+    padding: 5px;
+    width: 250px;
+    height: 25px;
+    outline: none;
+    color: white;
+
+    &:focus {
+      outline: 5px ridge #fab856
+    }
+  }
+
+  .login-button {
+    font-weight: bold;
+    background-color: #fab856;
+    border-radius: 7px;
+    border-color: #fab856;
+
+    &:hover {
+      background-color: #273655;
+      color: #fab856;
+      border-width: 3px;
+    }
+
+  }
+
+  .login__link {
+    font-size: 15px;
+    text-decoration: none;
+    color: white;
+    padding: 20px 0 20px 0;
+  }
+
+  .login-button__text {
+    padding: 10px;
+    display: flex;
+    justify-content: space-between;
+  }
+}
+
+.cords {
+  color: white;
+}
+
+.top-footer {
+  height: 10vh;
+}
+
+.footer {
+  height: 30vh;
+  background-color: #007834;
+}

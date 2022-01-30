@@ -1,0 +1,16 @@
+<button class="hamburger-btn" #hamburgerBtn (click)="showMenu()">
+  <span class="hamburger-btn__container">
+    <span class="hamburger-btn__line"></span>
+  </span>
+</button>
+<nav class="navbar" #navbar>
+  <ul class="menu">
+    <li class="menu__item" routerLink="/models" (click)="closeMenuWhenClick()">MODELE</li>
+    <li class="menu__item" routerLink="/add-model" (click)="closeMenuWhenClick()">DODAJ MODEL</li>
+    <li class="menu__item" routerLink="/frauds" (click)="closeMenuWhenClick()">OBLICZ FRAUDY</li>
+  </ul>
+  <ul class="menu">
+    <li class="menu__item" routerLink="/">WYLOGUJ</li>
+  </ul>
+</nav>
+

@@ -1,0 +1,18 @@
+<app-navbar></app-navbar>
+<div class="addModel-page">
+  <div class="addModel-up">
+    <input class="addModel__button" type="file"
+           (change)="onChange($event)">
+  </div>
+  <div>
+    <button (click)="onUpload()"
+            class="addModel__buttonUpload">
+      DODAJ MODEL
+    </button>
+  </div>
+  <div class="container" *ngIf="loading">
+    <h3 class="loading">Loading ...</h3>
+  </div>
+</div>
+
+

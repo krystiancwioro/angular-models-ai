@@ -1,0 +1,79 @@
+.models-page {
+  background-image: url('../../../assets/backgroundAI2.png');
+  background-size: cover;
+  background-position: center;
+  background-repeat: no-repeat;
+  width: 100vw;
+  min-height: 100vh;
+  display: flex;
+  flex-direction: column;
+  padding: 100px 0;
+}
+
+.model-text {
+  display: flex;
+  flex-direction: row;
+}
+
+.model__status {
+  padding: 5px 0;
+}
+
+.model-status {
+  height: 60px;
+  width: 160px;
+  display: flex;
+  flex-direction: row;
+  background-color: white;
+  margin: 20px 60px;
+  font-weight: bold;
+  border-radius: 7px;
+  border-bottom: 2px white solid;
+}
+
+
+.models-item {
+  width: 90vw;
+  list-style-type: none;
+  color: black;;;
+
+  .model {
+    display: flex;
+    justify-content: space-evenly;
+    align-items: center;
+    padding: 40px 0;
+    border-bottom: 2px white solid;
+
+    &:last-child {
+      border-bottom: none;
+    }
+  }
+}
+
+.item-button {
+  display: flex;
+  flex-direction: column;
+}
+
+.item__Btn {
+  padding: 10px 30px;
+  margin: 10px 0;
+  font-weight: bold;
+  background-color: white;
+  border-radius: 7px;
+  border-color: white;
+
+  &:hover {
+    background-color: #273655;
+    color: white;
+    border-width: 3px;
+  }
+}
+
+.model-img {
+  margin: 5px;
+  padding: 5px;
+  background-color: white;
+}
+
+

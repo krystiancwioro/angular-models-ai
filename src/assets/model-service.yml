@@ -1,0 +1,748 @@
+openapi: 3.0.1
+info:
+  title: model-service
+  description: 'Usługi do typowania nieprawidłowości oraz określania prawdopodobieństwa fraudu dla ZLA.'
+  termsOfService: asseco.pl/terms/
+  contact:
+    email: tomasz.sobolewski@asseco.pl
+  version: 1.0.0
+servers:
+- url: /model-service/api/v1
+
+paths:
+
+  /czy_dziala:
+    get:
+      summary: Operacja sprawdza czy usługa działa prawidłowo.
+      responses:
+        '200':
+          description: OK
+        '500':
+          description: Internal Server Error
+          content:
+            application/json:
+              schema:
+                type: string
+        default:
+          description: Default response.
+      parameters: []
+
+  /dodaj_model:
+    post:
+      summary: Dodaje model na podstawie przesłanego w załączniku pliku yaml.
+      responses:
+        '200':
+          description: OK
+        '500':
+          description: Internal Server Error
+          content:
+            application/json:
+              schema:
+                type: string
+        default:
+          description: Default response.
+      parameters: []
+
+      requestBody:
+        content:
+         multipart/form-data:
+          schema:
+            type: object
+            properties:
+              req:
+                type: string
+                format: binary
+
+  /oblicz_fraudy:
+    post:
+      summary: Oblicza prawdopodobieństwa fraudów dla listy ZLA
+      operationId: obliczFraudy
+      requestBody:
+        description: Lista ZLA
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/DaneWejsciowe'
+        required: true
+
+      responses:
+        200:
+          description: 'Przetwarzanie zakończone poprawnie'
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/DaneWyjsciowe'
+
+
+  /oblicz_fraudy_dla_modelu:
+    post:
+      summary: Oblicza prawdopodobieństwa fraudów dla zadanego modelu.
+      operationId: obliczFraudy2
+      requestBody:
+        description: Lista ZLA
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/DaneWejsciowe2'
+        required: true
+
+      responses:
+        200:
+          description: 'Przetwarzanie zakończone poprawnie'
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/DaneWyjsciowe'
+
+  /pobierz_stan_modelu:
+    get:
+      summary: |
+                Zwraca jeden ze statusów modelu:
+                 corrupted - brak części plików, nieprzydatny model
+                 ready - model wytrenowany i mozliwy do użycia
+                 staging - model w trakcie przejściowym np w trakcie uczenia
+                 new - model jeszcze nie istnieje
+      parameters:
+        - in: query
+          description: Pełna nazwa modelu wraz z wersją.
+          example: "model_ko.1.01.001"
+          name: nazwa_modelu
+          required: true
+          schema:
+            type: string
+      responses:
+        '200':
+          description: "Stan modelu: new, staging, ready, corrupted"
+          content:
+            application/json:
+              schema:
+                type: string
+                format: byte
+                description: Stan modelu
+                example: "ready"
+
+
+
+
+  /pobierz_raport/{nazwa_modelu}.html:
+    get:
+      summary: Pobiera raport
+      parameters:
+        - in: path
+          description: Pełna nazwa modelu wraz z wersją.
+          example: "model_ko.1.01.001"
+          name: nazwa_modelu
+          required: true
+          schema:
+            type: string
+      responses:
+        '200':
+          description: "plik html z raportem"
+
+
+  /usun_model:
+    delete:
+      summary: Usuwa model i wszystkie jego pliki
+      parameters:
+        - in: query
+          description: Pełna nazwa modelu wraz z wersją.
+          example: "model_ko.1.01.003"
+          name: nazwa_modelu
+          required: true
+          schema:
+            type: string
+      responses:
+        '200':
+          description: "Stan modelu: new, staging, ready, corrupted"
+          content:
+            application/json:
+              schema:
+                type: string
+                format: byte
+                description: Stan modelu
+                example: "ready"
+
+  /wyszukaj_modele:
+    post:
+      summary: Zwraca listę dostępnych modeli.
+      operationId: wyszukajModele
+      responses:
+        '200':
+          description: "Pełne nazwy modeli"
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  models_list:
+                    type: array
+                    items:
+                      type: string
+                      format: byte
+
+
+components:
+
+  schemas:
+
+    Cecha:
+      description: "Abstrakcyjna definicja dowolnej cechy"
+      required:
+      - KLUCZ
+      type: object
+
+      properties:
+        KLUCZ:
+          description: "Nazwa cechy"
+          type: string
+          format: byte
+          example: "O_UB0101_WIEK"
+        WARTOSC:
+          description: "Wartość cechy"
+          type: string
+          format: byte
+          example: "35"
+        TYP:
+          description: "Typ cechy: int32, int64, float, double, byte, date"
+          type: string
+          format: byte
+          example: "int"
+
+    ZestawDanychDoPredykcji2:
+      description: "Lista cech do predykcji"
+      required:
+      - listaCech
+      type: object
+
+      properties:
+        listaCech:
+          type: array
+          items:
+            $ref: '#/components/schemas/Cecha'
+
+    WynikPredykcji2:
+      description: "Lista cech do uzyskana w odpowiedzi"
+      required:
+      - listaCech
+      type: object
+
+      properties:
+        listaCech:
+          type: array
+          items:
+            $ref: '#/components/schemas/Cecha'
+
+    DaneWejsciowe2:
+      description: 'Paczka danych wejściowych zawierająca elementy sterujące i listę zestawów ZLA wraz z cechami surowymi'
+      required:
+      - listaZestawowDanych
+      type: object
+      properties:
+        nazwaModelu:
+          description: "Pełna nazwa modelu wraz z wersją"
+          example: model_ko.1.01.001
+          type: string
+          format: byte
+        listaZestawowDanych:
+          type: array
+          items:
+            $ref: '#/components/schemas/ZestawDanychDoPredykcji2'
+
+    DaneWyjsciowe2:
+      description: 'Odpowiedź z usługi'
+      required:
+      - listaZestawowDanych
+      type: object
+      properties:
+        listaZestawowDanych:
+          type: array
+          items:
+            $ref: '#/components/schemas/WynikPredykcji2'
+
+    ZestawDanychDoPredykcji:
+      required:
+      - ID_ZLA
+      - ID_PL
+      - ID_UB
+      - ID_LEKARZ
+      - ID_ZOZ
+      - STAN_NA
+      type: object
+
+      properties:
+
+        ID_ZLA:
+          description: "Identyfikator ZLA."
+          type: integer
+          format: int64
+        ID_PL:
+          description: "Identyfikator Płatnika."
+          type: integer
+          format: int64
+        ID_UB:
+          description: "Identyfikator Ubezpieczonego."
+          type: integer
+          format: int64
+        ID_LEKARZ:
+          description: "Identyfikator Lekarza."
+          type: integer
+          format: int64
+        ID_ZOZ:
+          description: "Identyfikator ZOZu."
+          type: integer
+          format: int64
+
+        UB0102_PLEC:
+          description: "Płeć ubezpieczonego wyliczona na podstawie pola pc.KKLIENTWZ.KLW_PESEL (M - mężczyzna, K - kobieta)"
+          type: string
+          format: byte
+          example: K
+        UB0103_DATA_URODZENIA:
+          description: "Data urodzenia ubezpieczonego. Ustalone na podstawie pola pc.KKLIENTWZ.KLW_DTURODZ"
+          type: string
+          format: date
+          example: 1991-01-02
+        UB0403_L_PLAT_3MC:
+          description: "Liczba płatników który złożyli raporty rozliczeniowe w kontekscie ubezpieczonego z w czasie 3 ostatnim miesięcy rozliczeniowych. Ostatnie 3 okresy liczone jako okresy (format YYYY-mm-01) zawierające się między STAN_NA -2 mc i STAN_NA -5 mc. Na podstawie pola DANE_MC_O_UBEZ.ID_PL"
+          type: integer
+          format: int32
+          example: 2
+        UB0405_L_PLAT_3MC_JEST_CHOR:
+          description: "Liczba płatników który złożyli raporty rozliczeniowe w kontekscie ubezpieczonego z w czasie 3 ostatnim miesięcy rozliczeniowych z niezerową podstawą na chorobowe. Ostatnie 3 okresy liczone jako okresy (format YYYY-mm-01) zawierające się między STAN_NA -2 mc i STAN_NA -5 mc. Na podstawie pola DANE_MC_O_UBEZ.ID_PL"
+          type: integer
+          format: int32
+          example: 2
+        UB0503_L_ZOZOW_2Y:
+          description: "Liczba ZOZ-ów w których wystawiono ZLA w kontekscie ubezpieczonego w okresie od STAN_NA - 2 lata do STAN_NA. Na podstawie pola pzl_zuszla.L4_IDZOZ"
+          type: integer
+          format: int32
+          example: 1
+        UB0504_L_ZLA_STATUS_P_2Y:
+          description: "Liczba ZLA o statusie P (skontrolowane - poprawne) wystawionych w kontekscie ubezpieczonego w okresie od STAN_NA - 2 lata do STAN_NA. Na podstawie pola pzl_zuszla.L4_STATUS"
+          type: integer
+          format: int32
+          example: 12
+        UB0505_L_ZLA_STATUS_K_2Y:
+          description: "Liczba ZLA o statusie K (skontrolowane - korekta) wystawionych w kontekscie ubezpieczonego w okresie od STAN_NA - 2 lata do STAN_NA. Na podstawie pola pzl_zuszla.L4_STATUS"
+          type: integer
+          format: int32
+          example: 13
+        UB0506_S_DNI_NIEZD_2Y:
+          description: "Suma liczby dni niezdolności do pracy na ZLA wystawionych w kontekscie ubezpieczonego w okresie od STAN_NA - 2 lata do STAN_NA. Na podstawie pola pzl_zuszla.L4_LICZBADNINDP"
+          type: integer
+          format: int32
+          example: 123
+        UB0508_L_KODOW_CHOROB_2Y:
+          description: "Liczba kodów chorób na wystawionych ZLA w kontekscie ubezpieczonego w okresie od STAN_NA - 2 lata do STAN_NA. Na podstawie pola pzl_zuszla.L4_NRSTATCHOROBY"
+          type: integer
+          format: int32
+          example: 21
+        UB0601_L_NIESTAW_KO_2Y:
+          description: "Liczba niestawiennictw ubezpieczonego na kontrolę poprawności orzekania ZLA w okresie od STAN_NA - 2 lata do STAN_NA. Na podstawie zapisów z tablicy WO_SPRAWA takich że pole SPR_STATUS=60003"
+          type: integer
+          format: int32
+          example: 2
+        PL0201_PKD_SEKCJA:
+          description: "Sekcja kod pkd płatnika. Ustalony na podstawie pola RST_PKD.PKD"
+          type: string
+          format: byte
+          example: A
+        ZLA0102_NIEZDOD:
+          description: "Z dokumentu ZLA: Data początku niezdolności. Ustalone na podstawie pola PZL_ZUSZLA.L4_NIEZDOD"
+          type: string
+          format: date
+          example: 2000-01-02
+        ZLA0103_NIEZDDO:
+          description: "Z dokumentu ZLA: Data końca niezdolności. Ustalone na podstawie pola PZL_ZUSZLA.L4_NIEZDDO"
+          type: string
+          format: date
+          example: 2000-01-12
+        ZLA0104_LICZBADNINDP:
+          description: "Z dokumentu ZLA: Liczba dni niezdolności. Ustalone na podstawie pola PZL_ZUSZLA.L4_LICZBADNINDP"
+          type: number
+          format: int32
+          example: 2
+        ZLA0105_LICZBADNIP:
+          description: "Z dokumentu ZLA: Liczba dni pobytu w szpitalu. Ustalone na podstawie pola PZL_ZUSZLA.L4_LICZBADNIP"
+          type: number
+          format: int32
+          example: 1
+        ZLA0106_WSKAZANIALEK:
+          description: "Z dokumentu ZLA: Wskazania lekarskie. Ustalone na podstawie pola PZL_ZUSZLA.L4_WSKAZANIALEK"
+          type: string
+          format: byte
+          example: 1
+        ZLA0107_KODCHOROBYA:
+          description: "Z dokumentu ZLA: Kod choroby A. Ustalone na podstawie pola PZL_ZUSZLA.L4_KODCHOROBYA"
+          type: string
+          format: byte
+          example: A
+        ZLA0108_KODCHOROBYB:
+          description: "Z dokumentu ZLA: Kod choroby B. Ustalone na podstawie pola PZL_ZUSZLA.L4_KODCHOROBYB"
+          type: string
+          format: byte
+          example: B
+        ZLA0109_KODCHOROBYC:
+          description: "Z dokumentu ZLA: Kod choroby C. Ustalone na podstawie pola PZL_ZUSZLA.L4_KODCHOROBYC"
+          type: string
+          format: byte
+          example: C
+        ZLA0110_KODCHOROBYD:
+          description: "Z dokumentu ZLA: Kod choroby D. Ustalone na podstawie pola PZL_ZUSZLA.L4_KODCHOROBYD"
+          type: string
+          format: byte
+          example: D
+        ZLA0111_NRSTATCHOROBY:
+          description: "Z dokumentu ZLA: Numer statystyczny choroby. Ustalony na podstawie pola PZL_ZUSZLA.NRSTATCHOROBY"
+          type: string
+          format: byte
+          example: F21
+        ZLA0112_KODPOKREW:
+          description: "Z dokumentu ZLA: Kod pokrewieństwa. Możliwe wartości 1 - dziecko,2 - małżonek, rodzic,itd 3- inne osoby. Ustalony na podstawie pola PZL_ZUSZLA.KODPOKREW"
+          type: string
+          format: byte
+          example: 1
+        ZLA0114_KODCH_SR_CZAS_NZD5Y:
+          description: "Z słownika WA_POBOR_KODCHOR_SR_DL: Średnia długość okresu niezdolności do pracy dla danego w badanym ZLA kody choroby - ustalone na podstawie danych z ostatnich 5 lat"
+          type: number
+          format: float
+          example: 2.23
+        PLUB0101_KOD_TYT_PODL:
+          description: "Kod tytułu ubezpieczenia ubezpieczonego u płatnika. Ustalony na podstawie pola max(kkubupl.KU_KDTYTUB)"
+          type: string
+          format: byte
+          example: 0110
+        PLUB0104_CZY_CHOR_OBOW:
+          description: "Czy kod tytułu z cechy PLUB01_KOD_TYT_PODL podlega obowiązkowemu ubezp chorobowemu (1 - Tak, 0 - NIE). Na podstawie słownika s14_kodub_gkodub"
+          type: integer
+          format: int32
+          example: 0
+        PLUB0105_CZY_CHOR_DOBR:
+          description: "Czy kod tytułu z cechy PLUB01_KOD_TYT_PODL podlega dobrowolnemu ubezp chorobowemu (1 - Tak, 0 - NIE). Na podstawie słownika s14_kodub_gkodub"
+          type: integer
+          format: int32
+          example: 1
+        PLUB0201_S_PODST_CHOR_3M:
+          description: "Suma podstaw na ubezpieczenie chorobowe ubezpieczonego z 3 ostatnim miesięcy rozliczeniowych w kontekscie podanego płatnika. Ostatnie 3 okresy liczone jako okresy (format YYYY-mm-01) zawierające się między STAN_NA -2 mc i STAN_NA -5 mc. Na podstawie pola DANE_MC_O_UBEZ.PODSTAWACHOR"
+          type: number
+          format: float
+          example: 1023.02
+        PLUB0203_L_OKR_ROZL_3MC:
+          description: "Liczba okresów rozliczeniowych z raportami rozliczeniowymi w kontekscie ubezpieczonego i podanego płatnika z w czasie 3 ostatnim miesięcy rozliczeniowych. Ostatnie 3 okresy liczone jako okresy (format YYYY-mm-01) zawierające się między STAN_NA -2 mc i STAN_NA -5 mc. Na podstawie pola DANE_MC_O_UBEZ.OKRES"
+          type: integer
+          format: int32
+          example: 2
+        LEK0103_L_ZLA_P_O1Y:
+          description: "Liczba ZLA o statusie P (kontrola, poprawne) ktre były wystawione przez lekarza w ostatnim pełnym roku kalendarzowym"
+          type: integer
+          format: int32
+          example: 3
+        LEK0104_L_ZLA_K_O1Y:
+          description: "Liczba ZLA o statusie K (kontrola, skorygowano) które były wystawione przez lekarza w ostatnim pełnym roku kalendarzowym"
+          type: integer
+          format: int32
+          example: 3
+        ZOZ0103_L_ZLA_P_O1Y:
+          description: "Liczba ZLA o statusie P (kontrola, poprawne) ktre były wystawione przez ZOZ w ostatnim pełnym roku kalendarzowym"
+          type: integer
+          format: int32
+          example: 3
+        ZOZ0104_L_ZLA_K_O1Y:
+          description: "Liczba ZLA o statusie K (kontrola, skorygowano) które były wystawione przez ZOZ w ostatnim pełnym roku kalendarzowym"
+          type: integer
+          format: int32
+          example: 3
+        SLO01_KO_PROG_TRAFNOSC:
+          description: "Próg prawdopodobieństwa nieprawidłości (zakres danych 0 -1) w kontekscie modelu do Kontroli Orzekania powyżej którego ZLA jest oznaczane do kontroli (wartość danej wyjściowej CZY_KONTROLA_KO_TRAFNOSC = 'TAK'). Wartość ustalana na postawie słownika w kontekscie oddziału ZUS w którym założona jest sprawa dla ZLA"
+          type: number
+          format: float
+          example: 0.41
+        SLO02_KO_PROG_STRATA:
+          description: "Próg minimalne wartości potencjalnej straty  w kontekscie modelu do Kontroli Orzekania powyżej którego ZLA jest oznaczane do kontroli (wartość danej wyjściowej CZY_KONTROLA_KO_STRATA = 'TAK'). Wartość ustalana na postawie słownika w kontekscie oddziału ZUS w którym założona jest sprawa dla ZLA"
+          type: number
+          format: float
+          example: 1202.00
+        SLO03_KO_PROG_LDNI:
+          description: "Próg minimalne wartości potencjalnej liczby dni nienaleznego zasiłku w kontekscie modelu do Kontroli Orzekania powyżej którego ZLA jest oznaczane do kontroli (wartość danej wyjściowej CZY_KONTROLA_KO_LDNI = 'TAK'). Wartość ustalana na postawie słownika w kontekscie oddziału ZUS w którym założona jest sprawa dla ZLA"
+          type: number
+          format: float
+          example: 40.2
+        SLO04_KO_WERSJA_MODELU:
+          description: "Wersja modelu predykcyjnego który ma być w kontekscie Kontroli Orzekania . Wartość ustalana na postawie słownika w kontekscie oddziału ZUS w którym założona jest sprawa dla ZLA"
+          type: string
+          format: byte
+          example: 1.01.001
+        SLO11_KW_PROG_TRAFNOSC:
+          description: "Próg prawdopodobieństwa nieprawidłości (zakres danych 0 -1) w kontekscie modelu do Kontroli Wykorzystania powyżej którego ZLA jest oznaczane do kontroli (wartość danej wyjściowej CZY_KONTROLA_KW_TRAFNOSC = 'TAK'). Wartość ustalana na postawie słownika w kontekscie oddziału ZUS w którym założona jest sprawa dla ZLA"
+          type: number
+          format: float
+          example: 0.41
+        SLO12_KW_PROG_STRATA:
+          description: "Próg minimalne wartości potencjalnej straty  w kontekscie modelu do Kontroli Wykorzystania powyżej którego ZLA jest oznaczane do kontroli (wartość danej wyjściowej CZY_KONTROLA_KW_STRATA = 'TAK'). Wartość ustalana na postawie słownika w kontekscie oddziału ZUS w którym założona jest sprawa dla ZLA"
+          type: number
+          format: float
+          example: 1202.00
+        SLO13_KW_PROG_LDNI:
+          description: "Próg minimalne wartości potencjalnej liczby dni nienaleznego zasiłku w kontekscie modelu do Kontroli Wykorzystania powyżej którego ZLA jest oznaczane do kontroli (wartość danej wyjściowej CZY_KONTROLA_KW_STRATA = 'TAK'). Wartość ustalana na postawie słownika w kontekscie oddziału ZUS w którym założona jest sprawa dla ZLA"
+          type: number
+          format: float
+          example: 40.2
+        SLO14_KW_WERSJA_MODELU:
+          description: "Wersja modelu predykcyjnego który ma być w kontekscie Kontroli Wykorzystania . Wartość ustalana na postawie słownika w kontekscie oddziału ZUS w którym założona jest sprawa dla ZLA"
+          type: string
+          format: byte
+          example: 1.01.001
+        PAR01_STAN_NA:
+          description: "Data określająca wg stanu na jaki dzień są określone cechy dla ZLA. Zakłąda się że dla danych bieżących będzie to CURRENT_DATE"
+          type: string
+          format: date
+          example: 2021-10-03
+
+
+
+    WynikPredykcji:
+      description: "Wynik predykcji dla pojedynczego zestawu danych"
+      required:
+      - ID_ZLA
+      - ID_PL
+      - ID_UB
+      - ID_LEKARZ
+      - ID_ZOZ
+      - STAN_NA
+      type: object
+      properties:
+
+        ID_ZLA:
+          description: "Identyfikator ZLA."
+          type: integer
+          format: int64
+        ID_PL:
+          description: "Identyfikator Płatnika."
+          type: integer
+          format: int64
+        ID_UB:
+          description: "Identyfikator Ubezpieczonego."
+          type: integer
+          format: int64
+        ID_LEKARZ:
+          description: "Identyfikator Lekarza."
+          type: integer
+          format: int64
+        ID_ZOZ:
+          description: "Identyfikator ZOZu."
+          type: integer
+          format: int64
+
+        O_STAN_NA:
+          description: "Czas ustalenia wartości cech"
+          type: string
+          format: date
+          example: 2021-04-21
+
+        O_LEK0103_PROCENT_KOREKT_2Y:
+          description: "Procent korekt przeszłych ZLA lekarza w poprzednim roku kalendarzowym"
+          type: number
+          format: float
+          example: 10.5
+        O_PL0201_PKD_SEKCJA:
+          description: "Branża płatnika składek - sekcja PKD"
+          type: string
+          example: N
+        O_PLUB0104_TYP_UBEZPIECZENIA:
+          description: "Obowiązkowość ubezpieczenia"
+          type: string
+          format: byte
+          example: Dobrowolne
+        O_PLUB0201_SREDNIA_CH_3M:
+          description: "Średnia podstawa ubezpieczenia chorobowego z ostatnich 3 pełnych okresów rozliczeniowych poprzedzających wystąpienie niezdolności"
+          type: number
+          format: float
+          example: 1680
+        O_UB0101_WIEK:
+          description: "Wiek ubezpieczonego w chwili wystąpienia niezdolności do pracy"
+          type: number
+          format: float
+          example: 32.5
+        O_UB0102_PLEC:
+          description: "Płeć ubezpieczonego"
+          type: string
+          example: Kobieta
+        O_UB0403_L_PLAT_3MC:
+          description: "Liczba płatników wszystkich ubezpieczeń w ostatnich trzech miesiącach kalendarzowych poprzedzających wystawienie bieżącego ZLA"
+          type: integer
+          format: int32
+          example: 2
+        O_UB0405_L_PLAT_3MC_JEST_CHOR:
+          description: "Liczba płatników ubezpieczenia chorobowego w ostatnich trzech miesiącach kalendarzowych poprzedzających wystawienie bieżącego ZLA"
+          type: integer
+          format: int32
+          example: 1
+        O_UB0503_L_ZOZOW_2Y:
+          description: "Liczba Zakładów Opieki Zdrowotnej w których ubezpieczony otrzymywał ZLA w ostatnich dwóch latach"
+          type: integer
+          format: int32
+          example: 3
+        O_UB0504_PROCENT_KOREKT_2Y:
+          description: "Procent korekt przeszłych ZLA ubezpieczonego w ostatnich dwóch latach"
+          type: number
+          format: float
+          example: 50
+        O_UB0506_S_DNI_NIEZD_2Y:
+          description: "Suma dni niezdolności do pracy ubezpieczonego w ostatnich dwóch latach"
+          type: integer
+          format: int32
+          example: 50
+        O_UB0508_L_KODOW_CHOROB_2Y:
+          description: "Liczba kodów chorób na wystawionych ZLA w kontekscie ubezpieczonego w okresie od STAN_NA - 2 lata do STAN_NA. Na podstawie pola pzl_zuszla.L4_NRSTATCHOROBY"
+          type: integer
+          format: int32
+          example: 3
+        O_UB0601_L_NIESTAW_KO_2Y:
+          description: "Liczba niestawiennictw na komisje lekarzy orzeczników w ostatnich dwóch latach poprzedzających wystawienie bieżącego ZLA"
+          type: integer
+          format: int32
+          example: 1
+        O_ZLA0104_LICZBADNINDP:
+          description: "Długość niezdolności do pracy"
+          type: integer
+          format: int32
+          example: 14
+        O_ZLA0105_LICZBADNINDP_VS_SREDNIA:
+          description: "Długość niezdolności do pracy w stosunku do średniej długości (w ostatnich 5-ciu latach) dla danej jednostki chorobowej ICD10"
+          type: number
+          format: float
+          example: 0.7
+        O_ZLA0106_SZPITAL:
+          description: "Czy bieżące ZLA zawierało w sobie pobyt w szpitalu"
+          type: string
+          example: TAK
+        O_ZLA0107_WSKAZANIALEK:
+          description: "Kod wskazania lekarza na ZLA"
+          type: string
+          format: byte
+          example: 1
+        O_ZLA0116_KOBIETA_W_CIAZY:
+          description: "Czy ZLA wystawione jest dla kobiety w ciąży"
+          type: string
+          example: TAK
+        O_ZLA0117_KONTYNUACJA:
+          description: "Czy bieżące ZLA jest kontynuacją choroby na którą było wystawione wcześniejsze ZLA"
+          type: string
+          example: TAK
+        O_ZLA0118_OPIEKA:
+          description: "Czy ZLA jest wystawione w związku z opieką nad osobą chorą"
+          type: string
+          example: NIE
+        O_ZLA0119_GRUPACHOROB:
+          description: "Grupa chorób ICD10"
+          type: string
+          format: byte
+          example: D
+        O_ZOZ0103_PROCENT_KOREKT_2Y:
+          description: "Procent korekt przeszłych ZLA w Zakładzie Opieki Zdrowotnej w poprzednim roku kalendarzowym"
+          type: number
+          format: float
+          example: 4.5
+        WY01_KO_TRAFNOSC:
+          description: "Prawdopodobieństwo nieprawidłości (zakres danych 0 -1) w kontekscie modelu do Kontroli Orzekania"
+          type: number
+          format: float
+          example: 0.41
+        WY02_KO_STRATA:
+          description: "Wartości potencjalnej straty w kontekscie modelu do Kontroli Orzekania. Wyliczone jako iloczyn prawdopodobieństwa nieprawidłowości i szacunkowej wartości kwoty zasiłku wypłacanego za okres od daty PAR01_STAN_NA do daty końca trwania niezdolności do pracy z ZLA"
+          type: number
+          format: float
+          example: 1202.00
+        WY03_KO_LDNI:
+          description: "Wartości potencjalnej liczby dni nienaleznego zasiłku w kontekscie modelu do Kontroli Orzekania. Wyliczone jako iloczyn prawdopodobieństwa nieprawidłowości i pozostałej liczby dni niezdolności do pracy liczonej za okres od daty PAR01_STAN_NA do daty końca trwania niezdolności do pracy z ZLA."
+          type: number
+          format: float
+          example: 40.2
+        WY04_CZY_KONTROLA_KO_TRAFNOSC:
+          description: "Czy ZLA jest oznaczone do kontroli pod kątem przekroczenia przez WY01_KO_TRAFNOSC wartości progowej zdefiniowanej w SLO01_KO_PROG_TRAFNOSC? Przyjmuje wartości TAK i NIE"
+          type: string
+          format: byte
+          example: TAK
+        WY05_CZY_KONTROLA_KO_STRATA:
+          description: "Czy ZLA jest oznaczone do kontroli pod kątem przekroczenia przez WY02_KO_STRATA wartości progowej zdefiniowanej w SLO02_KO_PROG_STRATA? Przyjmuje wartości TAK i NIE"
+          type: string
+          format: byte
+          example: TAK
+        WY06_CZY_KONTROLA_KO_LDNI:
+          description: "Czy ZLA jest oznaczone do kontroli pod kątem przekroczenia przez WY03_KO_LDNI wartości progowej zdefiniowanej w SLO03_KO_PROG_LDNI? Przyjmuje wartości TAK i NIE"
+          type: string
+          format: byte
+          example: TAK
+        WY11_KW_TRAFNOSC:
+          description: "Prawdopodobieństwo nieprawidłości (zakres danych 0 -1) w kontekscie modelu do Kontroli Wykorzystania"
+          type: number
+          format: float
+          example: 0.41
+        WY12_KW_STRATA:
+          description: "Wartości potencjalnej straty  w kontekscie modelu do Kontroli Wykorzystania. Wyliczone jako iloczyn prawdopodobieństwa nieprawidłowości i szacunkowej wartości kwoty zasiłku wypłacanego za okres czasu trwania niezdolności do pracy z ZLA"
+          type: number
+          format: float
+          example: 1202.00
+        WY13_KW_LDNI:
+          description: "Wartości potencjalnej liczby dni nienaleznego zasiłku w kontekscie modelu do Kontroli Wykorzystania.  Wyliczone jako iloczyn prawdopodobieństwa nieprawidłowości i liczby dni niezdolności do pracy"
+          type: number
+          format: float
+          example: 40.2
+        WY14_CZY_KONTROLA_KW_TRAFNOSC:
+          description: "Czy ZLA jest oznaczone do kontroli pod kątem przekroczenia przez WY11_KW_TRAFNOSC wartości progowej zdefiniowanej w SLO11_KW_PROG_TRAFNOSC? Przyjmuje wartości TAK i NIE"
+          type: string
+          format: byte
+          example: TAK
+        WY15_CZY_KONTROLA_KW_STRATA:
+          description: "Czy ZLA jest oznaczone do kontroli pod kątem przekroczenia przez WY12_KW_STRATA wartości progowej zdefiniowanej w SLO12_KW_PROG_STRATA? Przyjmuje wartości TAK i NIE"
+          type: string
+          format: byte
+          example: TAK
+        WY16_CZY_KONTROLA_KW_LDNI:
+          description: "Czy ZLA jest oznaczone do kontroli pod kątem przekroczenia przez WY13_KW_LDNI wartości progowej zdefiniowanej w SLO13_KW_PROG_LDNI? Przyjmuje wartości TAK i NIE"
+          type: string
+          format: byte
+          example: TAK
+
+
+
+
+    DaneWejsciowe:
+      description: 'Paczka danych wejściowych zawierająca elementy sterujące i listę zestawów ZLA wraz z cechami surowymi'
+      required:
+      - listaZestawowDanych
+      type: object
+      properties:
+        listaZestawowDanych:
+          type: array
+          items:
+            $ref: '#/components/schemas/ZestawDanychDoPredykcji'
+
+
+
+    DaneWyjsciowe:
+      description: 'Odpowiedź z usługi'
+      required:
+      - listaZestawowDanych
+      type: object
+      properties:
+        listaZestawowDanych:
+          type: array
+          items:
+            $ref: '#/components/schemas/WynikPredykcji'
+
+
+
+
+  securitySchemes:
+    zus_auth:
+      type: oauth2
+      flows:
+        implicit:
+          authorizationUrl: http://zus_portal_url/oauth/dialog
+          scopes:
+            read:zla: odczyt parametrów
+    api_key:
+      type: apiKey
+      name: api_key
+      in: header
